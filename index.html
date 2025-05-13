@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Parachute Safety Calculator</title>
+    <style>
+        :root {
+            --primary: #2196f3;
+            --primary-light: #e3f2fd;
+            --primary-dark: #1976d2;
+            --secondary: #ff5722;
+            --gray-light: #f5f5f5;
+            --gray: #e0e0e0;
+            --text: #333;
+            --text-light: #757575;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--gray-light);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: var(--primary-dark);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+        
+        .calculator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .card-title {
+            color: var(--primary-dark);
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title svg {
+            margin-right: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 500px) {
+            .input-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .results-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 500px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .result-box {
+            background-color: var(--primary-light);
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .result-label {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        .result-unit {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        
+        .recommendation {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: var(--success);
+            color: white;
+            font-size: 14px;
+        }
+        
+        .recommendation.warning {
+            background-color: var(--warning);
+        }
+        
+        .recommendation.danger {
+            background-color: var(--danger);
+        }
+        
+        .viz-card {
+            grid-column: 1 / -1;
+            overflow: hidden;
+        }
+        
+        .viz-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray);
+            margin-bottom: 15px;
+        }
+        
+        .viz-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .viz-tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .viz-content {
+            display: none;
+            height: 300px;
+        }
+        
+        .viz-content.active {
+            display: block;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        
+        .preset-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 8px;
+            background-color: var(--gray);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .preset-badge:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .preset-badge.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .presets-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Drone Parachute Safety Calculator</h1>
+        <p class="subtitle">Calculate minimum safe deployment height for drone parachute systems</p>
+    </div>
+    
+    <div class="calculator-container">
+        <div class="card">
+            <div class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z" fill="#1976d2"/>
+                    <path d="M7 12H9V17H7V12ZM11 7H13V17H11V7ZM15 9H17V17H15V9Z" fill="#1976d2"/>
+                </svg>
+                Input Parameters
+            </div>
+            
+            <div class="presets-container">
+                <div class="preset-badge active" data-preset="custom">Custom</div>
+                <div class="preset-badge" data-preset="mavic2">DJI Mavic 2</div>
+                <div class="preset-badge" data-preset="phantom4">DJI Phantom 4</div>
+                <div class="preset-badge" data-preset="inspire2">DJI Inspire 2</div>
+                <div class="preset-badge" data-preset="matrice300">DJI Matrice 300</div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="drone-mass">Drone Mass (kg)</label>
+                    <input type="number" id="drone-mass" value="1.4" min="0.1" step="0.1">
+                    <div class="help-text">Without parachute</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="parachute-mass">Parachute Mass (kg)</label>
+                    <input type="number" id="parachute-mass" value="0.15" min="0" step="0.01">
+                    <div class="help-text">Including deployment system</div>
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="parachute-area">Parachute Area (m²)</label>
+                    <input type="number" id="parachute-area" value="3.0" min="0.1" step="0.1">
+                    <div class="help-text">Effective drag area</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="drag-coefficient">Drag Coefficient</label>
+                    <input type="number" id="drag-coefficient" value="1.4" min="0.1" max="2.5" step="0.1">
+                    <div class="help-text">Typical: 1.4 for round parachutes</div>
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="deployment-time">Deployment Time (s)</label>
+                    <input type="number" id="deployment-time" value="0.9" min="0.1" max="5" step="0.1">
+                    <div class="help-text">Time to fully inflate</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="reaction-time">Reaction Time (s)</label>
+                    <input type="number" id="reaction-time" value="0.3" min="0" max="2" step="0.1">
+                    <div class="help-text">Detection to deployment delay</div>
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="initial-velocity">Initial Velocity (m/s)</label>
+                    <input type="number" id="initial-velocity" value="0" step="0.1">
+                    <div class="help-text">Vertical velocity at failure</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="air-density">Air Density (kg/m³)</label>
+                    <input type="number" id="air-density" value="1.225" min="0.5" max="1.5" step="0.001">
+                    <div class="help-text">1.225 kg/m³ at sea level</div>
+                </div>
+            </div>
+            
+            <button id="calculate-btn">Calculate Safe Height</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z" fill="#1976d2"/>
+                </svg>
+                Results
+            </div>
+            
+            <div class="results-container">
+                <div class="result-box">
+                    <div class="result-label">Minimum Safe Height</div>
+                    <div class="result-value" id="min-height">--</div>
+                    <div class="result-unit">meters</div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-label">Recommended Height</div>
+                    <div class="result-value" id="recommended-height">--</div>
+                    <div class="result-unit">meters</div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-label">Terminal Velocity</div>
+                    <div class="result-value" id="terminal-velocity">--</div>
+                    <div class="result-unit">m/s</div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-label">Descent Time</div>
+                    <div class="result-value" id="descent-time">--</div>
+                    <div class="result-unit">seconds</div>
+                </div>
+            </div>
+            
+            <div id="recommendation" class="recommendation">
+                Enter drone and parachute parameters to see recommendations.
+            </div>
+        </div>
+        
+        <div class="card viz-card">
+            <div class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 13H5V11H3V13ZM3 17H5V15H3V17ZM3 9H5V7H3V9ZM7 13H21V11H7V13ZM7 17H21V15H7V17ZM7 7V9H21V7H7Z" fill="#1976d2"/>
+                </svg>
+                Visualizations
+            </div>
+            
+            <div class="viz-tabs">
+                <div class="viz-tab active" data-tab="velocity">Velocity Profile</div>
+                <div class="viz-tab" data-tab="altitude">Altitude Profile</div>
+            </div>
+            
+            <div id="velocity-tab" class="viz-content active">
+                <canvas id="velocity-chart"></canvas>
+            </div>
+            
+            <div id="altitude-tab" class="viz-content">
+                <canvas id="altitude-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This calculator is for educational purposes only. Always follow manufacturer guidelines for your specific drone model.</p>
+        <p>© 2025 Drone Safety Research Group</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Configuration
+        const GRAVITY = 9.81; // m/s²
+        let velocityChart = null;
+        let altitudeChart = null;
+        
+        // Drone presets
+        const dronePresets = {
+            custom: {
+                active: true
+            },
+            mavic2: {
+                droneMass: 0.9,
+                parachuteMass: 0.1,
+                parachuteArea: 2.0,
+                dragCoefficient: 1.4,
+                deploymentTime: 0.8
+            },
+            phantom4: {
+                droneMass: 1.4,
+                parachuteMass: 0.15,
+                parachuteArea: 3.0,
+                dragCoefficient: 1.4,
+                deploymentTime: 0.9
+            },
+            inspire2: {
+                droneMass: 3.4,
+                parachuteMass: 0.3,
+                parachuteArea: 7.0,
+                dragCoefficient: 1.4,
+                deploymentTime: 1.1
+            },
+            matrice300: {
+                droneMass: 6.3,
+                parachuteMass: 0.5,
+                parachuteArea: 12.0,
+                dragCoefficient: 1.4,
+                deploymentTime: 1.3
+            }
+        };
+        
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Preset badges
+            document.querySelectorAll('.preset-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    const preset = this.dataset.preset;
+                    setActivePreset(preset);
+                });
+            });
+            
+            // Calculate button
+            document.getElementById('calculate-btn').addEventListener('click', calculateResults);
+            
+            // Visualization tabs
+            document.querySelectorAll('.viz-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    setActiveTab(tabId);
+                });
+            });
+            
+            // Run initial calculation
+            calculateResults();
+        });
+        
+        // Set active preset
+        function setActivePreset(preset) {
+            // Update active state in UI
+            document.querySelectorAll('.preset-badge').forEach(badge => {
+                badge.classList.remove('active');
+                if (badge.dataset.preset === preset) {
+                    badge.classList.add('active');
+                }
+            });
+            
+            // If custom, don't change values
+            if (preset === 'custom') return;
+            
+            // Load preset values
+            const presetData = dronePresets[preset];
+            document.getElementById('drone-mass').value = presetData.droneMass;
+            document.getElementById('parachute-mass').value = presetData.parachuteMass;
+            document.getElementById('parachute-area').value = presetData.parachuteArea;
+            document.getElementById('drag-coefficient').value = presetData.dragCoefficient;
+            document.getElementById('deployment-time').value = presetData.deploymentTime;
+            
+            // Calculate with new values
+            calculateResults();
+        }
+        
+        // Set active visualization tab
+        function setActiveTab(tabId) {
+            // Update tabs
+            document.querySelectorAll('.viz-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update content
+            document.querySelectorAll('.viz-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tabId === 'velocity') {
+                document.getElementById('velocity-tab').classList.add('active');
+            } else {
+                document.getElementById('altitude-tab').classList.add('active');
+            }
+        }
+        
+        // Main calculation function - optimized for performance
+        function calculateResults() {
+            // Get input values
+            const droneMass = parseFloat(document.getElementById('drone-mass').value);
+            const parachuteMass = parseFloat(document.getElementById('parachute-mass').value);
+            const initialVelocity = parseFloat(document.getElementById('initial-velocity').value);
+            const parachuteArea = parseFloat(document.getElementById('parachute-area').value);
+            const dragCoefficient = parseFloat(document.getElementById('drag-coefficient').value);
+            const deploymentTime = parseFloat(document.getElementById('deployment-time').value);
+            const reactionTime = parseFloat(document.getElementById('reaction-time').value);
+            const airDensity = parseFloat(document.getElementById('air-density').value);
+            
+            // Calculate total mass
+            const totalMass = droneMass + parachuteMass;
+            
+            // Calculate terminal velocity
+            const terminalVelocity = Math.sqrt((2 * totalMass * GRAVITY) / (airDensity * dragCoefficient * parachuteArea));
+            
+            // Calculate free fall distance during reaction time
+            const reactionDistance = initialVelocity * reactionTime + 0.5 * GRAVITY * reactionTime * reactionTime;
+            const velocityAfterReaction = initialVelocity + GRAVITY * reactionTime;
+            
+            // Efficiently calculate deployment phase using fewer time steps
+            let deploymentDistance = 0;
+            let currentVelocity = velocityAfterReaction;
+            const timeStep = 0.05; // Use larger time steps for better performance
+            const timePoints = Math.ceil(deploymentTime / timeStep);
+            
+            // Prepare data arrays for charts
+            let velocityData = [];
+            let altitudeData = [];
+            
+            // Add initial points
+            velocityData.push({ x: 0, y: initialVelocity });
+            
+            // Calculate reaction phase with fewer points for performance
+            for (let i = 1; i <= 3; i++) {
+                const t = reactionTime * (i / 3);
+                const v = initialVelocity + GRAVITY * t;
+                velocityData.push({ x: t, y: v });
+            }
+            
+            // Deployment phase calculation
+            for (let i = 1; i <= timePoints; i++) {
+                const t = i * timeStep;
+                const deployProgress = Math.min(t / deploymentTime, 1);
+                
+                // Linearly interpolate parameters during deployment
+                const currentDragCoef = dragCoefficient * deployProgress;
+                const currentArea = parachuteArea * deployProgress;
+                
+                // Calculate drag force
+                const dragForce = 0.5 * airDensity * currentDragCoef * currentArea * currentVelocity * Math.abs(currentVelocity);
+                
+                // Calculate acceleration
+                const acceleration = GRAVITY - dragForce / totalMass;
+                
+                // Euler integration
+                currentVelocity += acceleration * timeStep;
+                deploymentDistance += currentVelocity * timeStep;
+                
+                // Only add points at reasonable intervals to improve performance
+                if (i % 2 === 0 || i === timePoints) {
+                    velocityData.push({ x: reactionTime + t, y: currentVelocity });
+                }
+            }
+            
+            // Calculate approach to terminal velocity distance (simplified)
+            const approachDistance = terminalVelocity * terminalVelocity / (2 * GRAVITY) * Math.log(
+                Math.pow(currentVelocity / terminalVelocity, 2) + 0.5
+            );
+            
+            // Add terminal velocity point
+            velocityData.push({ x: reactionTime + deploymentTime + 2, y: terminalVelocity });
+            velocityData.push({ x: reactionTime + deploymentTime + 5, y: terminalVelocity });
+            
+            // Calculate minimum safe height
+            const minSafeHeight = reactionDistance + deploymentDistance + approachDistance;
+            
+            // Add 50% safety margin for recommended height
+            const recommendedHeight = minSafeHeight * 1.5;
+            
+            // Calculate descent time
+            const steadyDescentTime = (recommendedHeight - reactionDistance - deploymentDistance) / terminalVelocity;
+            const totalDescentTime = reactionTime + deploymentTime + steadyDescentTime;
+            
+            // Generate altitude profile with fewer points for performance
+            let currentAltitude = recommendedHeight;
+            let currentTime = 0;
+            currentVelocity = initialVelocity;
+            
+            // Initial point
+            altitudeData.push({ x: 0, y: currentAltitude });
+            
+            // Reaction phase - fewer points
+            for (let i = 1; i <= 2; i++) {
+                const t = reactionTime * (i / 2);
+                currentVelocity = initialVelocity + GRAVITY * t;
+                currentAltitude -= (initialVelocity + currentVelocity) / 2 * (reactionTime / 2);
+                altitudeData.push({ x: t, y: currentAltitude });
+            }
+            
+            // Deployment phase - fewer points
+            const velocityAtDeploymentStart = currentVelocity;
+            for (let i = 1; i <= 4; i++) {
+                const t = deploymentTime * (i / 4);
+                const progress = i / 4;
+                
+                // Simplified velocity calculation
+                currentVelocity = velocityAtDeploymentStart * (1 - progress) + 
+                                 terminalVelocity * progress * 1.2; // Slightly higher then approaches terminal
+                
+                const distanceTraveled = (velocityAtDeploymentStart + currentVelocity) / 2 * (deploymentTime / 4);
+                currentAltitude -= distanceTraveled;
+                currentTime = reactionTime + t;
+                
+                altitudeData.push({ x: currentTime, y: currentAltitude });
+            }
+            
+            // Steady descent - fewer points
+            const steadyPhasePoints = 10; // Limit points for performance
+            const steadyTimeStep = steadyDescentTime / steadyPhasePoints;
+            
+            for (let i = 1; i <= steadyPhasePoints; i++) {
+                currentTime = reactionTime + deploymentTime + i * steadyTimeStep;
+                currentAltitude = recommendedHeight - (reactionDistance + deploymentDistance) - 
+                                 terminalVelocity * i * steadyTimeStep;
+                
+                if (currentAltitude < 0) currentAltitude = 0;
+                
+                altitudeData.push({ x: currentTime, y: currentAltitude });
+            }
+            
+            // Landing point
+            altitudeData.push({ x: totalDescentTime, y: 0 });
+            
+            // Update results display
+            document.getElementById('min-height').textContent = minSafeHeight.toFixed(1);
+            document.getElementById('recommended-height').textContent = recommendedHeight.toFixed(1);
+            document.getElementById('terminal-velocity').textContent = terminalVelocity.toFixed(1);
+            document.getElementById('descent-time').textContent = totalDescentTime.toFixed(1);
+            
+            // Update recommendation text
+            let recommendationHTML = '';
+            let recommendationClass = 'recommendation';
+            
+            if (terminalVelocity > 7) {
+                recommendationHTML = '<strong>Warning:</strong> Terminal velocity exceeds 7 m/s, which may cause damage on landing. Consider using a larger parachute.';
+                recommendationClass += ' danger';
+            } else if (terminalVelocity > 5.5) {
+                recommendationHTML = '<strong>Caution:</strong> Terminal velocity is between 5.5 and 7 m/s. Acceptable for drone recovery but may cause minor damage.';
+                recommendationClass += ' warning';
+            } else {
+                recommendationHTML = '<strong>Good:</strong> Terminal velocity is below 5.5 m/s, ideal for safe recovery with minimal risk.';
+            }
+            
+            recommendationHTML += `<br><br>Maintain minimum altitude of <strong>${recommendedHeight.toFixed(1)} meters</strong> for safe deployment. Parachute fully deploys in <strong>${deploymentTime} seconds</strong>.`;
+            
+            const recommendationElement = document.getElementById('recommendation');
+            recommendationElement.innerHTML = recommendationHTML;
+            recommendationElement.className = recommendationClass;
+            
+            // Update charts
+            updateVelocityChart(velocityData);
+            updateAltitudeChart(altitudeData);
+        }
+        
+        // Update velocity chart - optimized for performance
+        function updateVelocityChart(velocityData) {
+            const ctx = document.getElementById('velocity-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (velocityChart) {
+                velocityChart.destroy();
+            }
+            
+            // Create new chart with optimized options
+            velocityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Vertical Velocity',
+                        data: velocityData,
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0, // Remove points for better performance
+                        pointHoverRadius: 4 // Show points on hover
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500 // Faster animations
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Time (seconds)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8 // Limit number of ticks for better performance
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Velocity (m/s)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 6
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Hide legend for cleaner look
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return `Time: ${context[0].parsed.x.toFixed(1)}s`;
+                                },
+                                label: function(context) {
+                                    return `Velocity: ${context.parsed.y.toFixed(1)} m/s`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update altitude chart - optimized for performance
+        function updateAltitudeChart(altitudeData) {
+            const ctx = document.getElementById('altitude-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (altitudeChart) {
+                altitudeChart.destroy();
+            }
+            
+            // Create new chart with optimized options
+            altitudeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Altitude',
+                        data: altitudeData,
+                        borderColor: '#ff5722',
+                        backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0, // Remove points for better performance
+                        pointHoverRadius: 4 // Show points on hover
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500 // Faster animations
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Time (seconds)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8 // Limit number of ticks for better performance
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Altitude (m)'
+                            },
+                            min: 0,
+                            ticks: {
+                                maxTicksLimit: 6
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Hide legend for cleaner look
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return `Time: ${context[0].parsed.x.toFixed(1)}s`;
+                                },
+                                label: function(context) {
+                                    return `Altitude: ${context.parsed.y.toFixed(1)} m`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
